@@ -21,6 +21,7 @@ import { parseBoolean } from "../src/common/ops.js";
 export default async (req, res) => {
   const {
     id,
+    key, // <- 1) Get the key from the URL
     title_color,
     icon_color,
     text_color,
@@ -35,6 +36,27 @@ export default async (req, res) => {
   } = req.query;
 
   res.setHeader("Content-Type", "image/svg+xml");
+
+  // 2) Validation
+  const validKey = process.env.MY_SECRET_KEY; // We get the key from Vercel
+  
+  if (key !== validKey) {
+    setErrorCacheHeaders(res);
+    return res.send(
+      renderError({
+        message: "Acceso Denegado",
+        secondaryMessage: "Instancia privada. Llave incorrecta o ausente.",
+        renderOptions: {
+          title_color,
+          text_color,
+          bg_color,
+          border_color,
+          theme,
+        },
+      }),
+    );
+  }
+  // ---------------------------------
 
   const access = guardAccess({
     res,
