@@ -21,6 +21,7 @@ import { isLocaleAvailable } from "../src/translations.js";
 export default async (req, res) => {
   const {
     username,
+    key, // <- 1) Get the key from the URL
     hide,
     hide_title,
     hide_border,
@@ -49,7 +50,29 @@ export default async (req, res) => {
     rank_icon,
     show,
   } = req.query;
+
   res.setHeader("Content-Type", "image/svg+xml");
+
+  // 2) Validation
+  const validKey = process.env.MY_SECRET_KEY; // We get the key from Vercel
+  
+  if (key !== validKey) {
+    setErrorCacheHeaders(res);
+    return res.send(
+      renderError({
+        message: "Acceso Denegado",
+        secondaryMessage: "Instancia privada. Llave incorrecta o ausente.",
+        renderOptions: {
+          title_color,
+          text_color,
+          bg_color,
+          border_color,
+          theme,
+        },
+      }),
+    );
+  }
+  // ---------------------------------
 
   const access = guardAccess({
     res,
@@ -63,6 +86,7 @@ export default async (req, res) => {
       theme,
     },
   });
+  
   if (!access.isPassed) {
     return access.result;
   }
